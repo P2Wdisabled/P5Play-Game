@@ -31,6 +31,9 @@ let ground;
 // Police de caractères
 let font;
 
+
+let panier;
+
 // Score, timer
 var score = 0;
 var lastShotTime = 0;
@@ -61,18 +64,69 @@ var skips = 0;
 // ---- NOUVELLE VARIABLE POUR LA POSITION Y DE LA BALLE AU FRAME PRÉCÉDENT ----
 var prevBallY = 0;
 
-
+var balls = [
+  {
+    ballID: 'basique',
+    image: 'panier.png',
+    score: 1,
+    gravity: 8,
+    bounciness: 0.5
+  },
+  {
+    ballID: 'fridge',
+    image: 'panier1.png',
+    score: 3,
+    gravity: 15,
+    bounciness: 0.1
+  },
+  // {
+  //   ballID: 'bowling',
+  //   color: '#0000ff',
+  //   score: 2,
+  //   gravity: 10,
+  //   bounciness: 0.2
+  // }
+]
+var ballidkeeper = Math.floor(Math.random() * balls.length);
 // =====================
 // PRELOAD
 // =====================
 function preload(){
   font = loadFont("font.ttf");
+  panier = loadImage('Reda.jpg');
+
+  ballImage = loadImage(balls[ballidkeeper].image);
+  // panier.resize(50, 50);
+  ball = new Sprite();
+  ball.image = ballImage;
+  ball.x = ballResetPos;
+  ball.y = (2 * height) / 3 - 4;
+  ball.width = 20;
+  ball.height = 20;
+  ball.collider = 'dynamic';
+  ball.color = "#ffffff";
+  ball.bounciness = 0.5;
+
+  basketTrigger = new Sprite(500, 300, 50, 50);
+  panier.resize(basketTrigger.width, basketTrigger.height);
+  basketTrigger.image = panier;
+  basketTrigger.image.resize(basketTrigger.width, basketTrigger.height);
+  console.log(basketTrigger.image.width, basketTrigger.height);
+  basketTrigger.width = basketSize;
+  basketTrigger.height = basketSize;
+
+  basketTrigger.collider = 'static';
+  basketTrigger.color = color("#ff000055");
 }
 
 
 // =====================
 // SETUP
 // =====================
+
+
+
+
 function setup() {
   createCanvas(960, 540);
   textFont(font);
@@ -82,14 +136,7 @@ function setup() {
   water_col = color(water_col_string);
 
   // Création de la balle
-  ball = new Sprite();
-  ball.x = ballResetPos;
-  ball.y = (2 * height) / 3 - 4;
-  ball.diameter = 8;
-  ball.collider = 'dynamic';
-  ball.color = "#ffffff";
-  ball.bounciness = 0.5;
-
+  
   // Gravité
   world.gravity.y = 8;
   
@@ -103,12 +150,13 @@ function setup() {
   ground.collider = 'kinematic';
 
   // Le panier, centré
-  basketTrigger = new Sprite(width / 2, (2 * height) / 3 - 30);
-  basketTrigger.width = basketSize;
-  basketTrigger.height = basketSize;
-  basketTrigger.collider = 'static';
-  basketTrigger.color = color("#ff000055");
-  
+  // Assign the loaded image to the sprite
+  console.log(basketTrigger.image);
+
+  basketTrigger.image.width = 50;
+  basketTrigger.image.height = 50;
+  ball.image.width = ball.width;
+  ball.image.height = ball.height;
   // Couleur dynamique (HSB)
   colorMode(HSB, 360, 100, 100);
   hue = random() * 360;
