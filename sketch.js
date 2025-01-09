@@ -288,7 +288,7 @@ function draw() {
   strokeWeight(0);
   fill(255);
   textSize(20);
-  text("Score: " + score, 20, 30);
+  text("Score: " + score, 100, 30);
 
   if (!gameStarted) {
     textSize(32);
@@ -381,7 +381,7 @@ function draw() {
     // Condition : la balle doit être au-dessus du panier précédemment 
     // et doit descendre dedans (descente + Y > basketTop)
     if (prevBallY < basketTop && ball.y >= basketTop && ball.vel.y > 0) {
-      score += 3;
+      score += balls[ballidkeeper].score;
       resetBall();
       hue += 5;
     }
