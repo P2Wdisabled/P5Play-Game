@@ -67,7 +67,14 @@ let retryButton;
 let timerDiv;
 let gameStarted = false;
 let startTime = 0;
-const TOTAL_TIME = 10 * 1000; // 2 minutes in milliseconds
+let totalTime = 2 * 60 * 1000; // 2 minutes in millisecondes
+
+// Variables pour la gestion des paliers
+let currentLevel = 1;
+let showLevelUpMessage = false;
+let levelUpMessage = "";
+let levelUpMessageStart = 0;
+let flashInterval = 300; // Intervalle pour faire clignoter le message
 
 // =====================
 // PRELOAD
@@ -203,7 +210,7 @@ function draw() {
   // Update timer
   let currentTime = millis();
   let elapsedTime = currentTime - startTime;
-  let remainingTime = TOTAL_TIME - elapsedTime;
+  let remainingTime = totalTime - elapsedTime;
   if (remainingTime <= 0) {
     remainingTime = 0;
     gameStarted = false;
@@ -274,6 +281,22 @@ function draw() {
 
   // Mise à jour de prevBallY à la fin
   prevBallY = ball.y;
+
+  // Mise à jour du score/page, puis on check le niveau
+  checkLevelUp();
+
+  // Affichage clignotant du message de changement de niveau
+  if (showLevelUpMessage && millis() - levelUpMessageStart < 3000) {
+    let blink = floor((millis() / flashInterval) % 2);
+    if (blink === 0) {
+      textAlign(CENTER, CENTER);
+      textSize(48);
+      fill(255, 0, 0);
+      text(levelUpMessage, width / 2, height / 2 - 50);
+    }
+  } else if (showLevelUpMessage) {
+    showLevelUpMessage = false;
+  }
 }
 
 // =====================
@@ -379,6 +402,28 @@ function addTemporaryWalls() {
     topWall.remove();
     bottomWall.remove();
   }, 1000);
+}
+
+// =====================
+// checkLevelUp()
+// =====================
+function checkLevelUp() {
+  // Palier pour Niveau 3
+  if (score >= 12 && currentLevel < 3) {
+    currentLevel = 3;
+    totalTime += 120000; // +2 minutes
+    showLevelUpMessage = true;
+    levelUpMessage = "Niveau 3";
+    levelUpMessageStart = millis();
+  }
+  // Palier pour Niveau 2
+  else if (score >= 9 && currentLevel < 2) {
+    currentLevel = 2;
+    totalTime += 120000; // +2 minutes
+    showLevelUpMessage = true;
+    levelUpMessage = "Niveau 2";
+    levelUpMessageStart = millis();
+  }
 }
 
 // Fonctions non utilisées
