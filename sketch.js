@@ -3,7 +3,6 @@
 // =====================
 let backgroundImg;
 
-
 var balls = [
   {
     ballID: 'basique',
@@ -90,6 +89,20 @@ var skips = 0;
 // ---- NOUVELLE VARIABLE POUR LA POSITION Y DE LA BALLE AU FRAME PRÉCÉDENT ----
 var prevBallY = 0;
 
+// Variables for the play button and timer
+let playButton;
+let retryButton;
+let timerDiv;
+let gameStarted = false;
+let startTime = 0;
+let totalTime = 2 * 60 * 1000; // 2 minutes in millisecondes
+
+// Variables pour la gestion des paliers
+let currentLevel = 1;
+let showLevelUpMessage = false;
+let levelUpMessage = "";
+let levelUpMessageStart = 0;
+let flashInterval = 300; // Intervalle pour faire clignoter le message
 
 // =====================
 // PRELOAD
@@ -111,7 +124,6 @@ function preload(){
   font = loadFont("font.ttf");
 }
 
-
 // =====================
 // SETUP
 // =====================
@@ -119,6 +131,17 @@ function setup() {
   createCanvas(windowWidth, windowHeight);
   textFont(font);
   
+  // Initialize play button, retry button, and timer
+  playButton = select('#playButton');
+  retryButton = select('#retryButton');
+  timerDiv = select('#timer');
+  playButton.mousePressed(startGame);
+  retryButton.mousePressed(retryGame);
+
+  // Position buttons at the bottom center of the canvas
+  playButton.position(width / 2 - playButton.width / 2, height - 50);
+  retryButton.position(width / 2 - retryButton.width / 2, height - 50);
+
   sky_col = color(sky_col_string);
   ground_col = color(ground_col_string);
   water_col = color(water_col_string);
@@ -155,7 +178,6 @@ function setup() {
   basketTrigger.image.width = 50;
   basketTrigger.image.height = 100;
   
-  
   // Couleur dynamique (HSB)
   colorMode(HSB, 360, 100, 100);
   hue = random() * 360;
@@ -173,7 +195,6 @@ function windowResized() {
   playButton.position(width / 2 - playButton.width / 2, height - 50);
   retryButton.position(width / 2 - retryButton.width / 2, height - 50);
 }
-
 
 // Function to start the game
 function startGame() {
@@ -237,6 +258,33 @@ function draw() {
   textSize(20);
   text("Score: " + score, 20, 30);
 
+  if (!gameStarted) {
+    textSize(32);
+    textAlign(CENTER, CENTER);
+    text('Click Play to Start', width / 2, height / 2);
+    return;
+  }
+
+  // Update timer
+  let currentTime = millis();
+  let elapsedTime = currentTime - startTime;
+  let remainingTime = totalTime - elapsedTime;
+  if (remainingTime <= 0) {
+    remainingTime = 0;
+    gameStarted = false;
+    textSize(32);
+    textAlign(CENTER, CENTER);
+    text('Time\'s Up!', width / 2, height / 2);
+    retryButton.show();
+  }
+  let seconds = int((remainingTime / 1000) % 60);
+  let minutes = int((remainingTime / (1000 * 60)) % 60);
+  let timeString = nf(minutes, 2) + ':' + nf(seconds, 2);
+  textSize(32);
+  textAlign(CENTER, TOP);
+  fill(255);
+  text(timeString, width / 2, 10);
+
   // ----- DRAG (lancer de balle) -----
   if (mouse.pressing() && !mouseHeld) {
     mouseHeld = true;
@@ -291,8 +339,23 @@ function draw() {
 
   // Mise à jour de prevBallY à la fin
   prevBallY = ball.y;
-}
 
+  // Mise à jour du score/page, puis on check le niveau
+  checkLevelUp();
+
+  // Affichage clignotant du message de changement de niveau
+  if (showLevelUpMessage && millis() - levelUpMessageStart < 3000) {
+    let blink = floor((millis() / flashInterval) % 2);
+    if (blink === 0) {
+      textAlign(CENTER, CENTER);
+      textSize(48);
+      fill(255, 0, 0);
+      text(levelUpMessage, width / 2, height / 2 - 50);
+    }
+  } else if (showLevelUpMessage) {
+    showLevelUpMessage = false;
+  }
+}
 
 // =====================
 // resetBall()
@@ -322,7 +385,6 @@ function resetBall() {
   addTemporaryWalls();
 }
 
-
 // =====================
 // drawArrow()
 // =====================
@@ -337,7 +399,6 @@ function drawArrow(){
   stroke(255);
   line(fx, fy, fx + mouseVector.x, fy + mouseVector.y);
 }
-
 
 // =====================
 // addTemporaryWalls()
@@ -401,8 +462,29 @@ function addTemporaryWalls() {
   }, 1000);
 }
 
+// =====================
+// checkLevelUp()
+// =====================
+function checkLevelUp() {
+  // Palier pour Niveau 3
+  if (score >= 12 && currentLevel < 3) {
+    currentLevel = 3;
+    totalTime += 120000; // +2 minutes
+    showLevelUpMessage = true;
+    levelUpMessage = "Niveau 3";
+    levelUpMessageStart = millis();
+  }
+  // Palier pour Niveau 2
+  else if (score >= 9 && currentLevel < 2) {
+    currentLevel = 2;
+    totalTime += 120000; // +2 minutes
+    showLevelUpMessage = true;
+    levelUpMessage = "Niveau 2";
+    levelUpMessageStart = millis();
+  }
+}
 
 // Fonctions non utilisées
-// function collidesWith(ball, x1, y1, x2, y2) { /* vide */ }
+function clearOldStage() { /* plus besoin */ }
 function collidesWith(ball, x1, y1, x2, y2) { /* vide */ }
 function addNewStage() { /* plus besoin */ }
