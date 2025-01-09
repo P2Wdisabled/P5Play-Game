@@ -1,7 +1,31 @@
 // =====================
 // Variables globales
 // =====================
+var balls = [
+  {
+    ballID: 'basique',
+    color: '#ff0000',
+    score: 1,
+    gravity: 8,
+    bounciness: 0.5
+  },
+  {
+    ballID: 'fridge',
+    color: '#00ff00',
+    score: 2,
+    gravity: 15,
+    bounciness: 0.1
+  },
+  {
+    ballID: 'bowling',
+    color: '#0000ff',
+    score: 3,
+    gravity: 10,
+    bounciness: 0.2
+  }
+]
 
+var ballidkeeper = Math.floor(Math.random() * balls.length);
 // Tableau qui va contenir la position des drapeaux (si besoin)
 var flaglocs = [];
 
@@ -11,7 +35,7 @@ var ground_col_string = "#839e3f";
 var water_col_string = "#5c9dd0";
 
 var sky_col, ground_col, water_col;
-var movingBasketStarted = false
+
 // Paramètres pour le ciel
 var bright_sky = 84;
 var sat_sky = 40;
@@ -58,6 +82,7 @@ var holenum = 1;
 var strokecount = 0;
 var skips = 0;
 
+
 // ---- NOUVELLE VARIABLE POUR LA POSITION Y DE LA BALLE AU FRAME PRÉCÉDENT ----
 var prevBallY = 0;
 
@@ -88,10 +113,11 @@ function setup() {
   ball.diameter = 8;
   ball.collider = 'dynamic';
   ball.color = "#ffffff";
-  ball.bounciness = 1;
+  console.log(balls[ballidkeeper])
+  ball.bounciness = balls[ballidkeeper].bounciness;
 
   // Gravité
-  world.gravity.y = 5;
+  world.gravity.y = balls[ballidkeeper].gravity;
   
   // Sol plat (rectangle)
   worldPoints.push([0, (2 * height) / 3]);
@@ -103,7 +129,7 @@ function setup() {
   ground.collider = 'kinematic';
 
   // Le panier, centré
-  basketTrigger = new Sprite(width / 2, (2 * height) / 3 - 100);
+  basketTrigger = new Sprite(width / 2, (2 * height) / 3 - 30);
   basketTrigger.width = basketSize;
   basketTrigger.height = basketSize;
   basketTrigger.collider = 'static';
@@ -206,7 +232,7 @@ function draw() {
     // et doit descendre dedans
     // => (prevBallY < basketTop) et ball.vel.y > 0
     if (prevBallY < basketTop+5 && ball.vel.y > 0) {
-      score += 3;
+      score += balls[ballidkeeper].score;
       resetBall();
       hue += 5;
     }
@@ -214,11 +240,6 @@ function draw() {
 
   // Mise à jour de prevBallY à la fin
   prevBallY = ball.y;
-  if(movingBasketStarted == false){
-    startBasketLoop()
-    startBasketLoopV2()
-    movingBasketStarted = true;
-  }
 }
 
 
@@ -329,70 +350,6 @@ function addTemporaryWalls() {
   }, 1000);
 }
 
-
-// =====================
-// FONCTION DE MOUVEMENT
-// =====================
-function startBasketLoop() {
-  // On stocke la position de départ du panier
-  let startX = basketTrigger.x;
-
-  // Amplitude du mouvement
-  let distance = 100;
-
-  // Vitesse (ajuste selon tes goûts)
-  let speed = 1.5;
-
-  // Sens initial (1 = vers la droite, -1 = vers la gauche)
-  let direction = 1;
-
-  // On utilise un setInterval pour mettre à jour la position
-  // en boucle toutes les ~16ms (60 fps)
-  basketLoopID = setInterval(() => {
-    basketTrigger.x += speed * direction;
-
-    // On inverse le sens quand on atteint la limite droite ou gauche
-    if (basketTrigger.x >= startX + distance) {
-      direction = -1;
-    } else if (basketTrigger.x <= startX) {
-      direction = 1;
-    }
-  }, 16);
-}
-
-// =====================
-// FONCTION DE MOUVEMENT
-// =====================
-let basketLoopIDV2;
-function startBasketLoopV2() {
-  // On stocke la position de départ du panier
-  let startY = basketTrigger.y;
-
-  // Amplitude du mouvement (distance totale de haut en bas)
-  let distance = 50;
-
-  // Vitesse (ajuste selon tes préférences)
-  let speed = 1.5;
-
-  // Sens initial (1 = vers le bas, -1 = vers le haut)
-  let direction = 1;
-
-  // On utilise un setInterval pour mettre à jour la position
-  // en boucle toutes les ~16ms (approximativement 60 fps)
-  basketLoopIDV2 = setInterval(() => {
-    // Mise à jour de la position Y du panier
-    basketTrigger.y += speed * direction;
-
-    // Inversion de la direction lorsqu'on atteint la limite inférieure
-    if (basketTrigger.y >= startY + distance) {
-      direction = -1;
-    }
-    // Inversion de la direction lorsqu'on atteint la limite supérieure
-    else if (basketTrigger.y <= startY - distance) {
-      direction = 1;
-    }
-  }, 16);
-}
 
 // Fonctions non utilisées
 function clearOldStage() { /* plus besoin */ }
