@@ -61,6 +61,13 @@ var skips = 0;
 // ---- NOUVELLE VARIABLE POUR LA POSITION Y DE LA BALLE AU FRAME PRÉCÉDENT ----
 var prevBallY = 0;
 
+// Variables for the play button and timer
+let playButton;
+let retryButton;
+let timerDiv;
+let gameStarted = false;
+let startTime = 0;
+const TOTAL_TIME = 10 * 1000; // 2 minutes in milliseconds
 
 // =====================
 // PRELOAD
@@ -69,7 +76,6 @@ function preload(){
   font = loadFont("font.ttf");
 }
 
-
 // =====================
 // SETUP
 // =====================
@@ -77,6 +83,17 @@ function setup() {
   createCanvas(960, 540);
   textFont(font);
   
+  // Initialize play button, retry button, and timer
+  playButton = select('#playButton');
+  retryButton = select('#retryButton');
+  timerDiv = select('#timer');
+  playButton.mousePressed(startGame);
+  retryButton.mousePressed(retryGame);
+
+  // Position buttons at the bottom center of the canvas
+  playButton.position(width / 2 - playButton.width / 2, height - 50);
+  retryButton.position(width / 2 - retryButton.width / 2, height - 50);
+
   sky_col = color(sky_col_string);
   ground_col = color(ground_col_string);
   water_col = color(water_col_string);
@@ -117,6 +134,22 @@ function setup() {
   prevBallY = ball.y;
 }
 
+// Function to start the game
+function startGame() {
+  gameStarted = true;
+  startTime = millis();
+  playButton.hide();
+  retryButton.hide();
+}
+
+// Function to retry the game
+function retryGame() {
+  gameStarted = true;
+  startTime = millis();
+  score = 0;
+  playButton.hide();
+  retryButton.hide();
+}
 
 // =====================
 // DRAW
@@ -159,6 +192,33 @@ function draw() {
   fill(255);
   textSize(20);
   text("Score: " + score, 20, 30);
+
+  if (!gameStarted) {
+    textSize(32);
+    textAlign(CENTER, CENTER);
+    text('Click Play to Start', width / 2, height / 2);
+    return;
+  }
+
+  // Update timer
+  let currentTime = millis();
+  let elapsedTime = currentTime - startTime;
+  let remainingTime = TOTAL_TIME - elapsedTime;
+  if (remainingTime <= 0) {
+    remainingTime = 0;
+    gameStarted = false;
+    textSize(32);
+    textAlign(CENTER, CENTER);
+    text('Time\'s Up!', width / 2, height / 2);
+    retryButton.show();
+  }
+  let seconds = int((remainingTime / 1000) % 60);
+  let minutes = int((remainingTime / (1000 * 60)) % 60);
+  let timeString = nf(minutes, 2) + ':' + nf(seconds, 2);
+  textSize(32);
+  textAlign(CENTER, TOP);
+  fill(255);
+  text(timeString, width / 2, 10);
 
   // ----- DRAG (lancer de balle) -----
   if (mouse.pressing() && !mouseHeld) {
@@ -216,7 +276,6 @@ function draw() {
   prevBallY = ball.y;
 }
 
-
 // =====================
 // resetBall()
 // =====================
@@ -245,7 +304,6 @@ function resetBall() {
   addTemporaryWalls();
 }
 
-
 // =====================
 // drawArrow()
 // =====================
@@ -260,7 +318,6 @@ function drawArrow(){
   stroke(255);
   line(fx, fy, fx + mouseVector.x, fy + mouseVector.y);
 }
-
 
 // =====================
 // addTemporaryWalls()
@@ -323,7 +380,6 @@ function addTemporaryWalls() {
     bottomWall.remove();
   }, 1000);
 }
-
 
 // Fonctions non utilisées
 function clearOldStage() { /* plus besoin */ }
