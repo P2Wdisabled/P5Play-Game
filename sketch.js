@@ -5,14 +5,14 @@ let backgroundImg;
 
 var balls = [
   {
-    ballID: 'basique',
+    ballID: 'mail',
     image: 'assets/mail.png',
     score: 1,
-    gravity: 8,
+    gravity: 6,
     bounciness: 0.5
   },
   {
-    ballID: 'fridge',
+    ballID: 'dossier',
     image: 'assets/dossier.png',
     score: 3,
     gravity: 8,
@@ -55,6 +55,13 @@ let ball;
 let ground;
 let backgroundtest;
 let panier;
+let soundPlay;
+let soundBackground;
+let muteButton;
+let isMuted = false;
+let volumeSlider; // Ajout d'une variable pour la barre de volume
+let soundLevelUp;
+
 
 // Police de caractères
 let font;
@@ -76,7 +83,7 @@ var basketSize = 50;
 // Pour le drag
 var mouseHeld = false;
 var strokeStart = [];
-var maxArrowLength = 200;
+var maxArrowLength = 400;
 
 // Couleur dynamique
 var hue;
@@ -118,8 +125,17 @@ let shootingTimer = null; // Pour gérer le retour automatique à l’image “t
 function preload(){
   backgroundImg = loadImage("assets/ground.png");
   panier = loadImage('assets/panier.png');
-
   ballImage = loadImage(balls[ballidkeeper].image);
+
+  // Chargement des sons
+  soundPlay = loadSound("assets/sound/play.mp3");
+  soundBackground = loadSound("assets/sound/music_fond.mp3", () => {
+    // Autoplay en continu dès le chargement
+    soundBackground.loop();
+  });
+  soundPanier = loadSound("assets/sound/panier.mp3");
+  soundLevelUp = loadSound("assets/sound/levelup.mp3");
+
 
   // Chargement des images du basketteur
   basketteurTerreImg = loadImage("assets/basketteur_terre.png");
@@ -137,10 +153,10 @@ function preload(){
   ball.bounciness = balls[ballidkeeper].bounciness;
 
   // Création du panier
-  basketTrigger = new Sprite(650, windowHeight / 2);
+  basketTrigger = new Sprite(windowWidth - (windowWidth / 2.5), windowHeight / 2);
   basketTrigger.image = panier;
-  basketTrigger.width = 50;
-  basketTrigger.height = 100;
+  basketTrigger.width = 100;
+  basketTrigger.height = 200;
   basketTrigger.image.resize(basketTrigger.width, basketTrigger.height);
   console.log(basketTrigger.image.width, basketTrigger.image.height);
   basketTrigger.collider = 'static';
@@ -156,6 +172,19 @@ function setup() {
   createCanvas(windowWidth, windowHeight);
   textFont(font);
   
+  muteButton = createButton('Mute');
+
+  muteButton.position(width - 80, 10);
+  muteButton.mousePressed(toggleMute);
+  muteButton.style('background-color', '#333');
+  muteButton.style('color', '#fff');
+  muteButton.style('border', 'none');
+  muteButton.style('border-radius', '4px');
+  muteButton.style('font-size', '16px');
+  muteButton.style('padding', '6px 12px');
+  muteButton.style('cursor', 'pointer');
+
+
   // Initialize play button, retry button, and timer
   playButton = select('#playButton');
   retryButton = select('#retryButton');
@@ -165,16 +194,32 @@ function setup() {
 
   // Position buttons at the bottom center of the canvas
   playButton.position(width / 2 - playButton.width / 2, height - 50);
+  playButton.style('background-color', '#333');
+  playButton.style('color', '#fff');
+  playButton.style('border', 'none');
+  playButton.style('border-radius', '4px');
+  playButton.style('font-size', '16px');
+  playButton.style('padding', '6px 12px');
+  playButton.style('cursor', 'pointer');
+
   retryButton.position(width / 2 - retryButton.width / 2, height - 50);
+  retryButton.style('background-color', '#333');
+  retryButton.style('color', '#fff');
+  retryButton.style('border', 'none');
+  retryButton.style('border-radius', '4px');
+  retryButton.style('font-size', '16px');
+  retryButton.style('padding', '6px 12px');
+  retryButton.style('cursor', 'pointer');
+
 
   sky_col = color(sky_col_string);
   ground_col = color(ground_col_string);
   water_col = color(water_col_string);
 
   // Create background sprite
-  backgroundtest = new Sprite(width / 2, height - height / 4);
+  backgroundtest = new Sprite(width / 4.6, height - height / 5);
   backgroundtest.image = backgroundImg;
-  backgroundtest.width = width * 1.5; 
+  backgroundtest.width = width * 1.6; 
   backgroundtest.height = height / 2; 
   backgroundtest.collider = 'none'; 
   backgroundtest.image.resize(backgroundtest.width, backgroundtest.height);
@@ -191,8 +236,8 @@ function setup() {
   ground = new Sprite(worldPoints);
   ground.collider = 'kinematic';
 
-  basketTrigger.image.width = 50;
-  basketTrigger.image.height = 100;
+  basketTrigger.image.width = 100;
+  basketTrigger.image.height = 200;
   
   // Couleur dynamique (HSB)
   colorMode(HSB, 360, 100, 100);
@@ -213,6 +258,16 @@ function setup() {
   basketteur.image.height = 280;
   
   resetBall();
+
+  volumeSlider = createSlider(0, 1, 0.5, 0.01);
+  volumeSlider.position(width - 220, 12);
+  volumeSlider.style('width', '120px');
+  volumeSlider.style('cursor', 'pointer');
+  volumeSlider.input(() => {
+    if (soundBackground) {
+      soundBackground.setVolume(volumeSlider.value());
+    }
+  });
 }
 
 // =====================
@@ -231,7 +286,13 @@ function startGame() {
   startTime = millis();
   playButton.hide();
   retryButton.hide();
+
+
+  if (soundPlay) {
+    soundPlay.play();
+  }
 }
+
 
 // Function to retry the game
 function retryGame() {
@@ -240,6 +301,10 @@ function retryGame() {
   score = 0;
   playButton.hide();
   retryButton.hide();
+
+  if (soundPlay) {
+    soundPlay.play();
+  }
 }
 
 // =====================
@@ -326,30 +391,30 @@ function draw() {
     drawArrow();
   }
   if (mouse.released()) {
-    if(!shotInProgress){
+    if (!shotInProgress) {
       mouseHeld = false;
       // On calcule la vitesse uniquement si la balle est quasi immobile
       if (abs(ball.vel.x) < 0.1 && abs(ball.vel.y) < 0.1) {
         var vec = createVector(strokeStart[0] - mouse.x, strokeStart[1] - mouse.y, 0);
         vec.limit(maxArrowLength);
-        if(vec.mag() > 1) {
-          ball.vel.x = lerp(0, 10, vec.x / maxArrowLength);
-          ball.vel.y = lerp(0, 10, vec.y / maxArrowLength);
+        if (vec.mag() > 1) {
+          ball.vel.x = lerp(0, 13, vec.x / maxArrowLength); // Augmenter la puissance de lancer
+          ball.vel.y = lerp(0, 13, vec.y / maxArrowLength); // Augmenter la puissance de lancer
 
           // Quand on tire, on change l’image du basketteur
-          if(!isShooting) {
+          if (!isShooting) {
             isShooting = true;
             basketteur.image = basketteurSautImg;
-            basketteur.x = ballResetPos-30;                       // À adapter
-            basketteur.y = (2 * height) / 3 +120;     // À adapter
-            basketteur.width  = 80;                   // À ajuster selon tes images
-            basketteur.height = 280;                  // Pareil
+            basketteur.x = ballResetPos - 30; // À adapter
+            basketteur.y = (2 * height) / 3 + 120; // À adapter
+            basketteur.width = 80; // À ajuster selon tes images
+            basketteur.height = 280; // Pareil
             basketteur.image.width = 80;
             basketteur.image.height = 280;
             // Au bout de 2 secondes, on repasse au basketteur_terre
             shootingTimer = setTimeout(() => {
               basketteur.image = basketteurTerreImg;
-              basketteur.y = (2 * height) / 3 +140;     // À adapter
+              basketteur.y = (2 * height) / 3 + 140; // À adapter
               isShooting = false;
             }, 500);
           }
@@ -382,6 +447,12 @@ function draw() {
     // et doit descendre dedans (descente + Y > basketTop)
     if (prevBallY < basketTop && ball.y >= basketTop && ball.vel.y > 0) {
       score += balls[ballidkeeper].score;
+
+      if (soundPanier) {
+        soundPanier.play();
+      }
+      selectRandomBall();
+
       resetBall();
       hue += 5;
     }
@@ -407,10 +478,27 @@ function draw() {
   }
 }
 
+
+// =====================
+// selectRandomBall()
+// =====================
+function selectRandomBall() {
+  let randomIndex = Math.floor(Math.random() * balls.length);
+  let selectedBall = balls[randomIndex];
+  
+  ball.image = loadImage(selectedBall.image);
+  ball.bounciness = selectedBall.bounciness;
+  world.gravity.y = selectedBall.gravity;
+}
+
+
 // =====================
 // resetBall()
 // =====================
 function resetBall() {
+
+  selectRandomBall();
+
   // Réinitialise la position de la balle
   ball.x = ballResetPos;
   ball.y = (2 * height) / 3 - 4;
@@ -530,6 +618,9 @@ function checkLevelUp() {
     showLevelUpMessage = true;
     levelUpMessage = "Niveau 3";
     levelUpMessageStart = millis();
+    if (soundLevelUp) {
+      soundLevelUp.play();
+    }
     startBasketLoop();
   }
   // Palier pour Niveau 2
@@ -539,6 +630,11 @@ function checkLevelUp() {
     showLevelUpMessage = true;
     levelUpMessage = "Niveau 2";
     levelUpMessageStart = millis();
+
+    if (soundLevelUp) {
+      soundLevelUp.play();
+    }
+
     startBasketLoopV2();
   }
 }
@@ -596,6 +692,25 @@ function startBasketLoopV2() {
     }
   }, 16);
 }
+
+
+
+// =====================
+// toggleMute()
+// =====================
+function toggleMute() {
+  if (!isMuted) {
+    soundBackground.setVolume(0);
+    isMuted = true;
+    muteButton.html("Unmute");
+  } else {
+    soundBackground.setVolume(1);
+    isMuted = false;
+    muteButton.html("Mute");
+  }
+}
+
+
 
 // Fonctions non utilisées
 function clearOldStage() { /* plus besoin */ }
