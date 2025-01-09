@@ -1,7 +1,34 @@
 // =====================
 // Variables globales
 // =====================
+let backgroundImg;
 
+
+var balls = [
+  {
+    ballID: 'basique',
+    color: '#ff0000',
+    score: 1,
+    gravity: 8,
+    bounciness: 0.5
+  },
+  {
+    ballID: 'fridge',
+    color: '#00ff00', 
+    score: 3,
+    gravity: 15,
+    bounciness: 0.1
+  },
+  {
+    ballID: 'bowling',
+    color: '#0000ff',
+    score: 2,
+    gravity: 10,
+    bounciness: 0.2
+  }
+]
+
+var ballidkeeper = Math.floor(Math.random() * balls.length);
 // Tableau qui va contenir la position des drapeaux (si besoin)
 var flaglocs = [];
 
@@ -27,6 +54,8 @@ var worldPoints = [];
 let basketTrigger; // ancien "holeTrigger"
 let ball;
 let ground;
+let backgroundtest;
+let panier;
 
 // Police de caractères
 let font;
@@ -66,6 +95,19 @@ var prevBallY = 0;
 // PRELOAD
 // =====================
 function preload(){
+  backgroundImg = loadImage("assets/ground.png");
+  panier = loadImage('assets/panier.png');
+
+  basketTrigger = new Sprite(650,   550);
+  basketTrigger.image = panier;
+  basketTrigger.width = basketSize * 1.5; // Increase the width by 50%
+  basketTrigger.height = (basketSize + 100) * 1.5; // Increase the height by 50%
+  basketTrigger.image.resize(basketTrigger.width, basketTrigger.height);
+  console.log(basketTrigger.image.width, basketTrigger.image.height);
+
+  basketTrigger.collider = 'static';
+  basketTrigger.color = color("#ff000055");
+
   font = loadFont("font.ttf");
 }
 
@@ -74,12 +116,20 @@ function preload(){
 // SETUP
 // =====================
 function setup() {
-  createCanvas(960, 540);
+  createCanvas(windowWidth, windowHeight);
   textFont(font);
   
   sky_col = color(sky_col_string);
   ground_col = color(ground_col_string);
   water_col = color(water_col_string);
+
+  // Create background sprite
+  backgroundtest = new Sprite(width / 2, height - height / 4);
+  backgroundtest.image = backgroundImg;
+  backgroundtest.width = width * 1.5; // Adjust the width based on canvas size
+  backgroundtest.height = height / 2; // Set the height to half of the canvas height
+  backgroundtest.collider = 'none'; // Make the background non-collisionable
+  backgroundtest.image.resize(backgroundtest.width, backgroundtest.height);
 
   // Création de la balle
   ball = new Sprite();
@@ -102,12 +152,9 @@ function setup() {
   ground = new Sprite(worldPoints);
   ground.collider = 'kinematic';
 
-  // Le panier, centré
-  basketTrigger = new Sprite(width / 2, (2 * height) / 3 - 30);
-  basketTrigger.width = basketSize;
-  basketTrigger.height = basketSize;
-  basketTrigger.collider = 'static';
-  basketTrigger.color = color("#ff000055");
+  basketTrigger.image.width = 50;
+  basketTrigger.image.height = 100;
+  
   
   // Couleur dynamique (HSB)
   colorMode(HSB, 360, 100, 100);
@@ -117,6 +164,33 @@ function setup() {
   prevBallY = ball.y;
 }
 
+// =====================
+// windowResized()
+// =====================
+function windowResized() {
+  resizeCanvas(windowWidth, windowHeight);
+  // Reposition buttons at the bottom center of the canvas
+  playButton.position(width / 2 - playButton.width / 2, height - 50);
+  retryButton.position(width / 2 - retryButton.width / 2, height - 50);
+}
+
+
+// Function to start the game
+function startGame() {
+  gameStarted = true;
+  startTime = millis();
+  playButton.hide();
+  retryButton.hide();
+}
+
+// Function to retry the game
+function retryGame() {
+  gameStarted = true;
+  startTime = millis();
+  score = 0;
+  playButton.hide();
+  retryButton.hide();
+}
 
 // =====================
 // DRAW
@@ -146,6 +220,9 @@ function draw() {
   endShape();
 
   ground.draw();
+
+  // Dessin du backgroundtest
+  backgroundtest.draw();
 
   // Dessin balle
   fill(255);
@@ -326,6 +403,6 @@ function addTemporaryWalls() {
 
 
 // Fonctions non utilisées
-function clearOldStage() { /* plus besoin */ }
+// function collidesWith(ball, x1, y1, x2, y2) { /* vide */ }
 function collidesWith(ball, x1, y1, x2, y2) { /* vide */ }
 function addNewStage() { /* plus besoin */ }
