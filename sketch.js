@@ -15,7 +15,7 @@ var balls = [
     ballID: 'fridge',
     image: 'assets/dossier.png',
     score: 3,
-    gravity: 15,
+    gravity: 8,
     bounciness: 0.1
   },
   // {
@@ -25,7 +25,7 @@ var balls = [
   //   gravity: 10,
   //   bounciness: 0.2
   // }
-]
+];
 
 var ballidkeeper = Math.floor(Math.random() * balls.length);
 // Tableau qui va contenir la position des drapeaux (si besoin)
@@ -68,7 +68,7 @@ var shotInProgress = false;
 var RESET_TIME = 5000; 
 
 // Variables pour la balle
-var ballResetPos = 30;
+var ballResetPos = 100;
 
 // Taille du "panier"
 var basketSize = 50;
@@ -105,16 +105,27 @@ let levelUpMessageStart = 0;
 let flashInterval = 300; // Intervalle pour faire clignoter le message
 
 // =====================
+// Variables pour le basketteur
+// =====================
+let basketteurTerreImg, basketteurSautImg; 
+let basketteur;
+let isShooting = false;   // Sait-on si le basketteur est “en saut” ?
+let shootingTimer = null; // Pour gérer le retour automatique à l’image “terre”
+
+// =====================
 // PRELOAD
 // =====================
 function preload(){
   backgroundImg = loadImage("assets/ground.png");
   panier = loadImage('assets/panier.png');
 
-
-
   ballImage = loadImage(balls[ballidkeeper].image);
-  // panier.resize(50, 50);
+
+  // Chargement des images du basketteur
+  basketteurTerreImg = loadImage("assets/basketteur_terre.png");
+  basketteurSautImg  = loadImage("assets/basketteur_saut.png");
+
+  // Création de la balle
   ball = new Sprite();
   ball.image = ballImage;
   ball.x = ballResetPos;
@@ -125,14 +136,13 @@ function preload(){
   ball.color = "#ffffff";
   ball.bounciness = balls[ballidkeeper].bounciness;
 
-
-  basketTrigger = new Sprite(650,   550);
+  // Création du panier
+  basketTrigger = new Sprite(650, windowHeight / 2);
   basketTrigger.image = panier;
-  basketTrigger.width = basketSize * 1.5; // Increase the width by 50%
-  basketTrigger.height = (basketSize + 100) * 1.5; // Increase the height by 50%
+  basketTrigger.width = 50;
+  basketTrigger.height = 100;
   basketTrigger.image.resize(basketTrigger.width, basketTrigger.height);
   console.log(basketTrigger.image.width, basketTrigger.image.height);
-
   basketTrigger.collider = 'static';
   basketTrigger.color = color("#ff000055");
 
@@ -164,12 +174,10 @@ function setup() {
   // Create background sprite
   backgroundtest = new Sprite(width / 2, height - height / 4);
   backgroundtest.image = backgroundImg;
-  backgroundtest.width = width * 1.5; // Adjust the width based on canvas size
-  backgroundtest.height = height / 2; // Set the height to half of the canvas height
-  backgroundtest.collider = 'none'; // Make the background non-collisionable
+  backgroundtest.width = width * 1.5; 
+  backgroundtest.height = height / 2; 
+  backgroundtest.collider = 'none'; 
   backgroundtest.image.resize(backgroundtest.width, backgroundtest.height);
-
-
 
   // Gravité
   world.gravity.y = balls[ballidkeeper].gravity;
@@ -193,8 +201,18 @@ function setup() {
   // On initialise prevBallY
   prevBallY = ball.y;
 
-  resetBall(); 
-
+  // --- Création du sprite du basketteur ---
+  basketteur = new Sprite();
+  basketteur.image = basketteurTerreImg;    // Au début, en position “terre”
+  basketteur.collider = 'none';             // Pas besoin de collision
+  basketteur.x = ballResetPos-30;                       // À adapter
+  basketteur.y = (2 * height) / 3 +140;     // À adapter
+  basketteur.width  = 80;                   // À ajuster selon tes images
+  basketteur.height = 280;                  // Pareil
+  basketteur.image.width = 80;
+  basketteur.image.height = 280;
+  
+  resetBall();
 }
 
 // =====================
@@ -263,6 +281,9 @@ function draw() {
   // Dessin panier
   basketTrigger.draw();
 
+  // Dessin du basketteur (après le fond et avant le reste du HUD)
+  basketteur.draw();
+
   // Score
   strokeWeight(0);
   fill(255);
@@ -305,18 +326,37 @@ function draw() {
     drawArrow();
   }
   if (mouse.released()) {
-    mouseHeld = false;
-    // On calcule la vitesse uniquement si la balle est quasi immobile
-    if (abs(ball.vel.x) < 0.1 && abs(ball.vel.y) < 0.1) {
-      var vec = createVector(strokeStart[0] - mouse.x, strokeStart[1] - mouse.y, 0);
-      vec.limit(maxArrowLength);
-      if(vec.mag() > 1) {
-        ball.vel.x = lerp(0, 10, vec.x / maxArrowLength);
-        ball.vel.y = lerp(0, 10, vec.y / maxArrowLength);
-        
-        // Timer
-        shotInProgress = true;
-        lastShotTime = millis();
+    if(!shotInProgress){
+      mouseHeld = false;
+      // On calcule la vitesse uniquement si la balle est quasi immobile
+      if (abs(ball.vel.x) < 0.1 && abs(ball.vel.y) < 0.1) {
+        var vec = createVector(strokeStart[0] - mouse.x, strokeStart[1] - mouse.y, 0);
+        vec.limit(maxArrowLength);
+        if(vec.mag() > 1) {
+          ball.vel.x = lerp(0, 10, vec.x / maxArrowLength);
+          ball.vel.y = lerp(0, 10, vec.y / maxArrowLength);
+
+          // Quand on tire, on change l’image du basketteur
+          if(!isShooting) {
+            isShooting = true;
+            basketteur.image = basketteurSautImg;
+            basketteur.x = ballResetPos-30;                       // À adapter
+            basketteur.y = (2 * height) / 3 +120;     // À adapter
+            basketteur.width  = 80;                   // À ajuster selon tes images
+            basketteur.height = 280;                  // Pareil
+            basketteur.image.width = 80;
+            basketteur.image.height = 280;
+            // Au bout de 2 secondes, on repasse au basketteur_terre
+            shootingTimer = setTimeout(() => {
+              basketteur.image = basketteurTerreImg;
+              basketteur.y = (2 * height) / 3 +140;     // À adapter
+              isShooting = false;
+            }, 500);
+          }
+
+          shotInProgress = true;
+          lastShotTime = millis();
+        }
       }
     }
     strokeStart = [];
@@ -324,8 +364,7 @@ function draw() {
   
   // RESET après X secondes
   if (shotInProgress && (millis() - lastShotTime >= RESET_TIME)) {
-    shotInProgress = false;
-    resetBall(); 
+    resetBall();
   }
 
   // Si le vecteur == 0, la balle ne bouge plus
@@ -337,21 +376,21 @@ function draw() {
   // --- PANIER MARQUÉ SEULEMENT PAR LE HAUT ---
   if (ball.overlapping(basketTrigger)) {
     // Coordonnée Y du "haut" du panier
-    let basketTop = basketTrigger.y - (basketTrigger.height / 2);
+    let basketTop = basketTrigger.y - (basketTrigger.height / 5);
+    let basketBottom = basketTrigger.y + (basketTrigger.height / 2);
     // Condition : la balle doit être au-dessus du panier précédemment 
-    // et doit descendre dedans
-    // => (prevBallY < basketTop) et ball.vel.y > 0
-    if (prevBallY < basketTop+5 && ball.vel.y > 0) {
+    // et doit descendre dedans (descente + Y > basketTop)
+    if (prevBallY < basketTop && ball.y >= basketTop && ball.vel.y > 0) {
       score += 3;
       resetBall();
       hue += 5;
     }
   }
 
-  // Mise à jour de prevBallY à la fin
+  // Mise à jour de prevBallY
   prevBallY = ball.y;
 
-  // Mise à jour du score/page, puis on check le niveau
+  // Mise à jour du score/paliers, puis on check le niveau
   checkLevelUp();
 
   // Affichage clignotant du message de changement de niveau
@@ -394,6 +433,15 @@ function resetBall() {
 
   // --- ICI on "entoure" la balle avec 4 murs pour 1 seconde ---
   addTemporaryWalls();
+
+  // Quand on reset, le basketteur récupère la balle en main (version terre)
+  basketteur.image = basketteurTerreImg;
+  isShooting = false;
+  // On annule le timer s’il était en cours pour repasser en saut
+  if (shootingTimer) {
+    clearTimeout(shootingTimer);
+    shootingTimer = null;
+  }
 }
 
 // =====================
@@ -416,20 +464,18 @@ function drawArrow(){
 // =====================
 function addTemporaryWalls() {
   // Dimensions de la "boîte" autour de la balle
-  // Ajuste si besoin
   let wallThickness = 2;
   let halfBox = 5; // "Rayon" horizontal/vertical autour de la balle
 
-  // Coordonnées centrales
   let xC = ball.x;
   let yC = ball.y;
 
   // MUR GAUCHE
   let leftWall = new Sprite(
-    xC - halfBox,  // x
-    yC,            // y
-    wallThickness, // width
-    halfBox * 2    // height
+    xC - halfBox,
+    yC,
+    wallThickness,
+    halfBox * 2
   );
   leftWall.collider = 'static';
   leftWall.color = color(255, 0, 0, 0);
@@ -484,6 +530,7 @@ function checkLevelUp() {
     showLevelUpMessage = true;
     levelUpMessage = "Niveau 3";
     levelUpMessageStart = millis();
+    startBasketLoop();
   }
   // Palier pour Niveau 2
   else if (score >= 9 && currentLevel < 2) {
@@ -492,10 +539,65 @@ function checkLevelUp() {
     showLevelUpMessage = true;
     levelUpMessage = "Niveau 2";
     levelUpMessageStart = millis();
+    startBasketLoopV2();
   }
+}
+
+// =====================
+// FONCTION DE MOUVEMENT NIVEAU 3
+// =====================
+function startBasketLoop() {
+  // On stocke la position de départ du panier
+  let startX = basketTrigger.x;
+
+  // Amplitude du mouvement
+  let distance = 100;
+
+  // Vitesse
+  let speed = 1.5;
+
+  // Sens initial (1 = vers la droite, -1 = vers la gauche)
+  let direction = 1;
+
+  basketLoopID = setInterval(() => {
+    basketTrigger.x += speed * direction;
+    if (basketTrigger.x >= startX + distance) {
+      direction = -1;
+    } else if (basketTrigger.x <= startX) {
+      direction = 1;
+    }
+  }, 16);
+}
+
+// =====================
+// FONCTION DE MOUVEMENT NIVEAU 2
+// =====================
+let basketLoopIDV2;
+function startBasketLoopV2() {
+  // On stocke la position de départ du panier
+  let startY = basketTrigger.y;
+
+  // Amplitude du mouvement
+  let distance = 50;
+
+  // Vitesse
+  let speed = 1.5;
+
+  // Sens initial (1 = vers le bas, -1 = vers le haut)
+  let direction = 1;
+
+  basketLoopIDV2 = setInterval(() => {
+    basketTrigger.y += speed * direction;
+    if (basketTrigger.y >= startY + distance) {
+      direction = -1;
+    }
+    else if (basketTrigger.y <= startY - distance) {
+      direction = 1;
+    }
+  }, 16);
 }
 
 // Fonctions non utilisées
 function clearOldStage() { /* plus besoin */ }
-function collidesWith(ball, x1, y1, x2, y2) { /* vide */ }
+// function collidesWith(ball, x1, y1, x2, y2) { /* vide */ }
 function addNewStage() { /* plus besoin */ }
