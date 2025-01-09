@@ -415,6 +415,7 @@ function checkLevelUp() {
     showLevelUpMessage = true;
     levelUpMessage = "Niveau 3";
     levelUpMessageStart = millis();
+    startBasketLoop();
   }
   // Palier pour Niveau 2
   else if (score >= 9 && currentLevel < 2) {
@@ -423,8 +424,75 @@ function checkLevelUp() {
     showLevelUpMessage = true;
     levelUpMessage = "Niveau 2";
     levelUpMessageStart = millis();
+    startBasketLoopV2();
   }
 }
+
+
+// =====================
+// FONCTION DE MOUVEMENT
+// =====================
+function startBasketLoop() {
+  // On stocke la position de départ du panier
+  let startX = basketTrigger.x;
+
+  // Amplitude du mouvement
+  let distance = 100;
+
+  // Vitesse (ajuste selon tes goûts)
+  let speed = 1.5;
+
+  // Sens initial (1 = vers la droite, -1 = vers la gauche)
+  let direction = 1;
+
+  // On utilise un setInterval pour mettre à jour la position
+  // en boucle toutes les ~16ms (60 fps)
+  basketLoopID = setInterval(() => {
+    basketTrigger.x += speed * direction;
+
+    // On inverse le sens quand on atteint la limite droite ou gauche
+    if (basketTrigger.x >= startX + distance) {
+      direction = -1;
+    } else if (basketTrigger.x <= startX) {
+      direction = 1;
+    }
+  }, 16);
+}
+
+// =====================
+// FONCTION DE MOUVEMENT
+// =====================
+let basketLoopIDV2;
+function startBasketLoopV2() {
+  // On stocke la position de départ du panier
+  let startY = basketTrigger.y;
+
+  // Amplitude du mouvement (distance totale de haut en bas)
+  let distance = 50;
+
+  // Vitesse (ajuste selon tes préférences)
+  let speed = 1.5;
+
+  // Sens initial (1 = vers le bas, -1 = vers le haut)
+  let direction = 1;
+
+  // On utilise un setInterval pour mettre à jour la position
+  // en boucle toutes les ~16ms (approximativement 60 fps)
+  basketLoopIDV2 = setInterval(() => {
+    // Mise à jour de la position Y du panier
+    basketTrigger.y += speed * direction;
+
+    // Inversion de la direction lorsqu'on atteint la limite inférieure
+    if (basketTrigger.y >= startY + distance) {
+      direction = -1;
+    }
+    // Inversion de la direction lorsqu'on atteint la limite supérieure
+    else if (basketTrigger.y <= startY - distance) {
+      direction = 1;
+    }
+  }, 16);
+}
+
 
 // Fonctions non utilisées
 function clearOldStage() { /* plus besoin */ }
