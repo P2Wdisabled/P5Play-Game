@@ -2,6 +2,31 @@
 // Variables globales
 // =====================
 
+var balls = [
+  {
+    ballID: 'basique',
+    color: '#ff0000',
+    score: 1,
+    gravity: 8,
+    bounciness: 0.5
+  },
+  {
+    ballID: 'fridge',
+    color: '#00ff00', 
+    score: 3,
+    gravity: 15,
+    bounciness: 0.1
+  },
+  {
+    ballID: 'bowling',
+    color: '#0000ff',
+    score: 2,
+    gravity: 10,
+    bounciness: 0.2
+  }
+]
+
+var ballidkeeper = Math.floor(Math.random() * balls.length);
 // Tableau qui va contenir la position des drapeaux (si besoin)
 var flaglocs = [];
 
@@ -302,30 +327,34 @@ function draw() {
 // =====================
 // resetBall()
 // =====================
+function selectRandomBall() {
+  let randomIndex = Math.floor(Math.random() * balls.length);
+  let selectedBall = balls[randomIndex];
+  
+  ball.color = selectedBall.color;
+  ball.bounciness = selectedBall.bounciness;
+  world.gravity.y = selectedBall.gravity;
+}
+
+// =====================
+// resetBall()
+// =====================
 function resetBall() {
-  // Réinitialise la position de la balle
+  // Sélectionne une balle aléatoire à chaque panier
+  selectRandomBall();
+
+  // ...existing code...
   ball.x = ballResetPos;
   ball.y = (2 * height) / 3 - 4;
-
-  // Annule complètement les vitesses
   ball.vel.x = 0;
   ball.vel.y = 0;
-
-  // Empêche tout mouvement résiduel en X et Y
-  ball.x = constrain(ball.x, ball.x, ball.x);
-  ball.y = constrain(ball.y, ball.y, ball.y);
-
-  // Réinitialise les interactions liées au tir
   strokeStart = [];
   shotInProgress = false;
   lastShotTime = 0;
-
-  // Met à jour l'état précédent de la balle
   prevBallY = ball.y;
-
-  // --- ICI on "entoure" la balle avec 4 murs pour 1 seconde ---
   addTemporaryWalls();
 }
+
 
 // =====================
 // drawArrow()
