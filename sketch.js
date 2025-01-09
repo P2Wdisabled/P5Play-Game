@@ -6,25 +6,25 @@ let backgroundImg;
 var balls = [
   {
     ballID: 'basique',
-    color: '#ff0000',
+    image: 'assets/mail.png',
     score: 1,
     gravity: 8,
     bounciness: 0.5
   },
   {
     ballID: 'fridge',
-    color: '#00ff00', 
+    image: 'assets/dossier.png',
     score: 3,
     gravity: 15,
     bounciness: 0.1
   },
-  {
-    ballID: 'bowling',
-    color: '#0000ff',
-    score: 2,
-    gravity: 10,
-    bounciness: 0.2
-  }
+  // {
+  //   ballID: 'bowling',
+  //   color: '#0000ff',
+  //   score: 2,
+  //   gravity: 10,
+  //   bounciness: 0.2
+  // }
 ]
 
 var ballidkeeper = Math.floor(Math.random() * balls.length);
@@ -111,6 +111,21 @@ function preload(){
   backgroundImg = loadImage("assets/ground.png");
   panier = loadImage('assets/panier.png');
 
+
+
+  ballImage = loadImage(balls[ballidkeeper].image);
+  // panier.resize(50, 50);
+  ball = new Sprite();
+  ball.image = ballImage;
+  ball.x = ballResetPos;
+  ball.y = (2 * height) / 3 - 4;
+  ball.width = 20;
+  ball.height = 20;
+  ball.collider = 'dynamic';
+  ball.color = "#ffffff";
+  ball.bounciness = balls[ballidkeeper].bounciness;
+
+
   basketTrigger = new Sprite(650,   550);
   basketTrigger.image = panier;
   basketTrigger.width = basketSize * 1.5; // Increase the width by 50%
@@ -154,17 +169,10 @@ function setup() {
   backgroundtest.collider = 'none'; // Make the background non-collisionable
   backgroundtest.image.resize(backgroundtest.width, backgroundtest.height);
 
-  // Création de la balle
-  ball = new Sprite();
-  ball.x = ballResetPos;
-  ball.y = (2 * height) / 3 - 4;
-  ball.diameter = 8;
-  ball.collider = 'dynamic';
-  ball.color = "#ffffff";
-  ball.bounciness = 0.5;
+
 
   // Gravité
-  world.gravity.y = 8;
+  world.gravity.y = balls[ballidkeeper].gravity;
   
   // Sol plat (rectangle)
   worldPoints.push([0, (2 * height) / 3]);
@@ -184,6 +192,9 @@ function setup() {
 
   // On initialise prevBallY
   prevBallY = ball.y;
+
+  resetBall(); 
+
 }
 
 // =====================
