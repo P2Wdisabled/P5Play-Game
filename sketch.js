@@ -12,14 +12,14 @@ var balls = [
   {
     ballID: 'fridge',
     color: '#00ff00',
-    score: 2,
+    score: 3,
     gravity: 15,
     bounciness: 0.1
   },
   {
     ballID: 'bowling',
     color: '#0000ff',
-    score: 3,
+    score: 2,
     gravity: 10,
     bounciness: 0.2
   }
