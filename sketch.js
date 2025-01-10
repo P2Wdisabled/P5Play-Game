@@ -53,7 +53,8 @@ var worldPoints = [];
 let basketTrigger; // ancien "holeTrigger"
 let ball;
 let ground;
-let backgroundtest;
+let backgroundFloor;
+let backgroundWall;
 let panier;
 let soundPlay;
 let soundBackground;
@@ -123,7 +124,8 @@ let shootingTimer = null; // Pour gérer le retour automatique à l’image “t
 // PRELOAD
 // =====================
 function preload(){
-  backgroundImg = loadImage("assets/ground.png");
+  backgroundFloorImg = loadImage("assets/ground.png");
+  backgroundWallImg = loadImage("assets/wall.png");
   panier = loadImage('assets/panier.png');
   ballImage = loadImage(balls[ballidkeeper].image);
 
@@ -217,13 +219,20 @@ function setup() {
   water_col = color(water_col_string);
 
   // Create background sprite
-  backgroundtest = new Sprite(width / 4.6, height - height / 5);
-  backgroundtest.image = backgroundImg;
-  backgroundtest.width = width * 1.6; 
-  backgroundtest.height = height / 2; 
-  backgroundtest.collider = 'none'; 
-  backgroundtest.image.resize(backgroundtest.width, backgroundtest.height);
+  backgroundFloor = new Sprite(width / 4.6, height - height / 5);
+  backgroundFloor.image = backgroundFloorImg;
+  backgroundFloor.width = width * 1.6; 
+  backgroundFloor.height = height / 2; 
+  backgroundFloor.collider = 'none'; 
+  backgroundFloor.image.resize(backgroundFloor.width, backgroundFloor.height);
 
+  
+  backgroundWall = new Sprite(width / 2, height - height/1.28);
+  backgroundWall.image = backgroundWallImg;
+  backgroundWall.width = width/1; 
+  backgroundWall.height = height/1.5; 
+  backgroundWall.collider = 'none'; 
+  backgroundWall.image.resize(backgroundWall.width, backgroundWall.height);
   // Gravité
   world.gravity.y = balls[ballidkeeper].gravity;
   
@@ -336,8 +345,9 @@ function draw() {
 
   ground.draw();
 
-  // Dessin du backgroundtest
-  backgroundtest.draw();
+  // Dessin du backgroundFloor
+  backgroundFloor.draw();
+  backgroundWall.draw();
 
   // Dessin balle
   fill(255);
